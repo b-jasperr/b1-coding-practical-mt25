@@ -76,7 +76,59 @@ class Mission:
     @classmethod
     def from_csv(cls, file_name: str):
         # You are required to implement this method
-        pass
+        """
+        Create a Mission from a CSV file.
+
+        Supported formats:
+        - CSV with header containing columns for reference, cave_height and cave_depth
+            (column names may include keywords like 'reference'/'ref', 'height'/'ceiling',
+            'depth'/'floor').
+        - CSV without header with three columns in order: reference, cave_height, cave_depth.
+        """
+        # Try reading with a header first
+        data = None
+        try:
+            data = np.genfromtxt(file_name, delimiter=',', names=True, dtype=float)
+        except Exception:
+            data = None
+
+        if data is not None and data.dtype.names is not None:
+            names = [n.lower() for n in data.dtype.names]
+
+            def find_column(candidates):
+                for cand in candidates:
+                     for n in names:
+                         if cand in n:
+                            return n
+                return None
+
+            ref_name = find_column(['reference', 'ref'])
+            height_name = find_column(['cave_height', 'height', 'ceiling', 'top'])
+            depth_name = find_column(['cave_depth', 'depth', 'floor', 'bottom'])
+
+            if ref_name and height_name and depth_name:
+                reference = np.asarray(data[ref_name], dtype=float)
+                cave_height = np.asarray(data[height_name], dtype=float)
+                cave_depth = np.asarray(data[depth_name], dtype=float)
+                return cls(reference, cave_height, cave_depth)
+
+        # Fallback: load as plain numeric CSV (no header)
+        arr = np.loadtxt(file_name, delimiter=',')
+        if arr.ndim == 1:
+            if arr.size != 3:
+                raise ValueError("CSV must contain three columns (reference, cave_height, cave_depth)")
+            reference = np.array([arr[0]])
+            cave_height = np.array([arr[1]])
+            cave_depth = np.array([arr[2]])
+        else:
+            if arr.shape[1] < 3:
+                raise ValueError("CSV must contain at least three columns (reference, cave_height, cave_depth)")
+            reference = arr[:, 0].astype(float)
+            cave_height = arr[:, 1].astype(float)
+            cave_depth = arr[:, 2].astype(float)
+
+        return cls(reference, cave_height, cave_depth)
+    
 
 
 class ClosedLoop:
@@ -105,3 +157,37 @@ class ClosedLoop:
     def simulate_with_random_disturbances(self, mission: Mission, variance: float = 0.5) -> Trajectory:
         disturbances = np.random.normal(0, variance, len(mission.reference))
         return self.simulate(mission, disturbances)
+
+class control:
+    """
+    PD controller class for ClosedLoop.
+    Usage:
+        ctrl = controller(kp=1.0, kd=0.1, dt=1.0, output_limits=(-10,10))
+        action = ctrl.update(reference, measurement)
+        ctrl.reset()
+    """
+    def __init__(self, kp: float, kd: float, dt: float = 1.0, output_limits: tuple = None):
+        self.kp = float(kp)
+        self.kd = float(kd)
+        self.dt = float(dt)
+        self.prev_error = 0.0
+        self.output_limits = output_limits
+
+    def reset(self):
+        self.prev_error = 0.0
+
+    def update(self, reference: float, measurement: float) -> float:
+        error = float(reference) - float(measurement)
+        derivative = (error - self.prev_error) / self.dt
+        self.prev_error = error
+
+        u = self.kp * error + self.kd * derivative
+
+        if self.output_limits is not None:
+            lo, hi = self.output_limits
+            if lo is not None:
+                u = max(lo, u)
+            if hi is not None:
+                u = min(hi, u)
+
+        return float(u)

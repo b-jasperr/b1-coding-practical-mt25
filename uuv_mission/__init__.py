@@ -1,3 +1,3 @@
-from .dynamic import Submarine, ClosedLoop, Mission, Trajectory, controller
+from ..notebooks.uuv_mission import Submarine, ClosedLoop, Mission, Trajectory, controller
 
-__al__ = ['Submarine', 'ClosedLoop', 'Mission', 'Trajectory', 'controller'  ]
+__all__ = ['Submarine', 'ClosedLoop', 'Mission', 'Trajectory', 'controller'  ]

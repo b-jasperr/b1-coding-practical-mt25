@@ -159,7 +159,7 @@ class ClosedLoop:
         disturbances = np.random.normal(0, variance, len(mission.reference))
         return self.simulate(mission, disturbances)
 
-class control:
+class controller:
     """
     PD controller class for ClosedLoop.
     Usage:

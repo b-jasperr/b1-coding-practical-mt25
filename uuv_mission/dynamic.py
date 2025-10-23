@@ -179,16 +179,16 @@ class controller:
 
     def update(self, reference: float, measurement: float) -> float:
         error = float(reference) - float(measurement)
-        derivative = (error - self.prev_error) / self.dt
+        derivative = (error - self.prev_error) #/ self.dt
         self.prev_error = error
 
         u = self.kp * error + self.kd * derivative
 
-        if self.output_limits is not None:
-            lo, hi = self.output_limits
-            if lo is not None:
-                u = max(lo, u)
-            if hi is not None:
-                u = min(hi, u)
+        #if self.output_limits is not None:
+         #   lo, hi = self.output_limits
+          #  if lo is not None:
+           #     u = max(lo, u)
+            #if hi is not None:
+             #   u = min(hi, u)
 
         return float(u)

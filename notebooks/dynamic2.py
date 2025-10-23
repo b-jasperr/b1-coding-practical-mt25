@@ -167,10 +167,10 @@ class controller:
         action = ctrl.update(reference, measurement)
         ctrl.reset()
     """
-    def __init__(self, kp: float, kd: float, dt: float = 1.0, output_limits: tuple = None):
+    def __init__(self, kp: float, kd: float, output_limits: tuple = None):
         self.kp = float(kp)
         self.kd = float(kd)
-        self.dt = float(dt)
+        #self.dt = float(dt)
         self.prev_error = 0.0
         self.output_limits = output_limits
 
@@ -179,16 +179,16 @@ class controller:
 
     def update(self, reference: float, measurement: float) -> float:
         error = float(reference) - float(measurement)
-        derivative = (error - self.prev_error) / self.dt
+        derivative = (error - self.prev_error) #/ self.dt
         self.prev_error = error
 
         u = self.kp * error + self.kd * derivative
 
-        if self.output_limits is not None:
-            lo, hi = self.output_limits
-            if lo is not None:
-                u = max(lo, u)
-            if hi is not None:
-                u = min(hi, u)
+        #if self.output_limits is not None:
+         #   lo, hi = self.output_limits
+          #  if lo is not None:
+           #     u = max(lo, u)
+            #if hi is not None:
+             #   u = min(hi, u)
 
         return float(u)
